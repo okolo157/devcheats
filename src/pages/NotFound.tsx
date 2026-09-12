@@ -5,12 +5,7 @@ import { useSeo } from "@/hooks/use-seo";
 const NotFound = () => {
   const location = useLocation();
 
-  useSeo({
-    title: "404 Not Found",
-    description: "The page you're looking for doesn't exist.",
-    path: location.pathname,
-    noindex: true,
-  });
+  useSeo(location.pathname);
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);

@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { Check, Copy, Download } from "lucide-react";
+import { Check, Copy, Download, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AgentSkill } from "@/data/skills";
 import { getCategoryLabel, getCategoryStyles } from "@/lib/category";
+import { skillHref } from "@/lib/detail-items";
 
 export function SkillCard(skill: AgentSkill) {
   const [copied, setCopied] = useState(false);
@@ -38,9 +40,14 @@ export function SkillCard(skill: AgentSkill) {
           <h3 className="text-sm font-semibold text-foreground">{skill.name}</h3>
           <p className="mt-1 text-xs text-muted-foreground">{skill.description}</p>
         </div>
-        <Badge variant="outline" className={`text-[10px] ${styles.badge}`}>
-          {getCategoryLabel(skill.category)}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge variant="outline" className={`text-[10px] ${styles.badge}`}>
+            {getCategoryLabel(skill.category)}
+          </Badge>
+          <Link to={skillHref(skill)} aria-label="View full page" className="text-muted-foreground transition-colors hover:text-foreground">
+            <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
 
       <div className="mb-3 flex flex-wrap gap-1.5">

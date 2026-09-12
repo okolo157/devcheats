@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Check, ChevronDown, ChevronRight, Copy } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Copy, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import type { AgentWorkflow } from "@/data/agentWorkflows";
 import { getCategoryLabel, getCategoryStyles } from "@/lib/category";
+import { agentWorkflowHref } from "@/lib/detail-items";
 
 export function AgentWorkflowCard(workflow: AgentWorkflow) {
   const [open, setOpen] = useState(false);
@@ -33,18 +35,27 @@ export function AgentWorkflowCard(workflow: AgentWorkflow) {
 
   return (
     <div className="rounded-lg border border-border bg-card">
-      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-        {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-medium text-foreground">{workflow.title}</h3>
-            <Badge variant="outline" className={`text-[10px] ${styles.badge}`}>
-              {getCategoryLabel(workflow.category)}
-            </Badge>
+      <div className="flex w-full items-center gap-3 px-4 py-3">
+        <button onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-medium text-foreground">{workflow.title}</h3>
+              <Badge variant="outline" className={`text-[10px] ${styles.badge}`}>
+                {getCategoryLabel(workflow.category)}
+              </Badge>
+            </div>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{workflow.goal}</p>
           </div>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{workflow.goal}</p>
-        </div>
-      </button>
+        </button>
+        <Link
+          to={agentWorkflowHref(workflow)}
+          aria-label="View full page"
+          className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </div>
 
       {open && (
         <div className="space-y-3 border-t border-border px-4 pb-4 pt-3 text-xs text-muted-foreground">

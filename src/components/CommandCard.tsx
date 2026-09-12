@@ -1,21 +1,29 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { Command } from "@/data/commands";
 import { Badge } from "@/components/ui/badge";
 import { getCategoryLabel, getCategoryStyles } from "@/lib/category";
+import { commandHref } from "@/lib/detail-items";
 
-export function CommandCard({ title, command, category, description, safety, platform }: Command) {
+export function CommandCard(command: Command) {
+  const { title, command: commandText, category, description, safety, platform } = command;
   const [copied, setCopied] = useState(false);
   const categoryStyles = getCategoryStyles(category);
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(command);
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await navigator.clipboard.writeText(commandText);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
   return (
-    <div className="group rounded-lg border border-border bg-card p-4 transition-colors hover:border-muted-foreground/30">
+    <Link
+      to={commandHref(command)}
+      className="group block rounded-lg border border-border bg-card p-4 transition-colors hover:border-muted-foreground/30"
+    >
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         <Badge variant="outline" className={`shrink-0 text-[10px] ${categoryStyles.badge}`}>
@@ -25,7 +33,7 @@ export function CommandCard({ title, command, category, description, safety, pla
       {description && <p className="mb-2 text-xs text-muted-foreground">{description}</p>}
       <div className="relative">
         <pre className="overflow-x-auto rounded-md bg-background px-3 py-2 font-mono text-sm text-cmd-code">
-          <code>{command}</code>
+          <code>{commandText}</code>
         </pre>
         <button
           onClick={handleCopy}
@@ -49,6 +57,6 @@ export function CommandCard({ title, command, category, description, safety, pla
           ))}
         </div>
       )}
-    </div>
+    </Link>
   );
 }

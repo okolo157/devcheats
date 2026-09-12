@@ -14,7 +14,6 @@ import { SkillCard } from "@/components/SkillCard";
 import { AgentWorkflowCard } from "@/components/AgentWorkflowCard";
 import { getCategoryLabel, getCategoryStyles } from "@/lib/category";
 import { useSeo } from "@/hooks/use-seo";
-import logoDark from "/image.png";
 
 type ViewMode = "all" | "commands" | "workflows" | "skills" | "recipes" | "agent-workflows";
 
@@ -45,33 +44,6 @@ const viewForPath: Record<string, ViewMode> = {
   "/agent-workflows": "agent-workflows",
 };
 
-const seoContent: Record<ViewMode, { title: string; description: string }> = {
-  all: {
-    title: "DevCheats — The Ultimate Dev Command Reference",
-    description: `A searchable cheatsheet of ${commands.length}+ Git, Terminal, npm, Docker, and AI commands plus ${workflows.length} workflows, ${agentSkills.length} agent skills, and ${recipes.length} recipes for developers.`,
-  },
-  commands: {
-    title: "Dev Commands Cheatsheet",
-    description: `Browse ${commands.length}+ Git, Docker, npm, and terminal commands with flags, examples, and copy-paste snippets.`,
-  },
-  workflows: {
-    title: "Developer Workflows",
-    description: `${workflows.length} multi-step workflows for common development tasks, from git rebasing to deployment.`,
-  },
-  skills: {
-    title: "AI Agent Skills",
-    description: `${agentSkills.length} reusable AI agent skills for Claude, Cursor, and other coding agents.`,
-  },
-  recipes: {
-    title: "Dev Recipes",
-    description: `${recipes.length} practical recipes and snippets for everyday development tasks.`,
-  },
-  "agent-workflows": {
-    title: "AI Coding Agent Workflows",
-    description: `${agentWorkflows.length} end-to-end workflows for AI coding agents like Claude Code and Cursor.`,
-  },
-};
-
 const Index = () => {
   const [search, setSearch] = useState("");
   const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
@@ -79,11 +51,7 @@ const Index = () => {
   const navigate = useNavigate();
   const view = viewForPath[location.pathname] ?? "all";
 
-  useSeo({
-    title: seoContent[view].title,
-    description: seoContent[view].description,
-    path: pathForView[view],
-  });
+  useSeo(pathForView[view]);
 
   const query = search.trim().toLowerCase();
 
@@ -196,7 +164,7 @@ const Index = () => {
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logoDark} alt="DevCheats logo" className="h-8 w-8 object-contain" />
+              <img src="/image.png" alt="DevCheats logo" className="h-8 w-8 object-contain" />
               <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">DevCheats</h1>
             </div>
           </div>
