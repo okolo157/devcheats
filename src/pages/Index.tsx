@@ -1,145 +1,203 @@
-import { useState, useMemo } from "react";
-import { Search, Layers } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Layers, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { commands, categoryLabels, type Category } from "@/data/commands";
+import { commands } from "@/data/commands";
 import { workflows } from "@/data/workflows";
+import { recipes } from "@/data/recipes";
+import { agentSkills } from "@/data/skills";
+import { agentWorkflows } from "@/data/agentWorkflows";
 import { CommandCard } from "@/components/CommandCard";
 import { WorkflowCard } from "@/components/WorkflowCard";
+import { RecipeCard } from "@/components/RecipeCard";
+import { SkillCard } from "@/components/SkillCard";
+import { AgentWorkflowCard } from "@/components/AgentWorkflowCard";
+import { getCategoryLabel, getCategoryStyles } from "@/lib/category";
 import logoDark from "/image.png";
-// import logoLight from "/dev-light.png";
 
-const categories: Category[] = ["git", "shell", "npm", "docker", "ai"];
+type ViewMode = "all" | "commands" | "workflows" | "skills" | "recipes" | "agent-workflows";
 
-const chipStyles: Record<Category, { active: string; inactive: string }> = {
-  git: {
-    active: "bg-cmd-git/20 text-cmd-git border-cmd-git/40",
-    inactive: "text-muted-foreground border-border hover:border-cmd-git/30 hover:text-cmd-git",
-  },
-  shell: {
-    active: "bg-cmd-shell/20 text-cmd-shell border-cmd-shell/40",
-    inactive: "text-muted-foreground border-border hover:border-cmd-shell/30 hover:text-cmd-shell",
-  },
-  npm: {
-    active: "bg-cmd-npm/20 text-cmd-npm border-cmd-npm/40",
-    inactive: "text-muted-foreground border-border hover:border-cmd-npm/30 hover:text-cmd-npm",
-  },
-  docker: {
-    active: "bg-cmd-docker/20 text-cmd-docker border-cmd-docker/40",
-    inactive: "text-muted-foreground border-border hover:border-cmd-docker/30 hover:text-cmd-docker",
-  },
-  ai: {
-    active: "bg-cmd-ai/20 text-cmd-ai border-cmd-ai/40",
-    inactive: "text-muted-foreground border-border hover:border-cmd-ai/30 hover:text-cmd-ai",
-  },
+const viewLabel: Record<ViewMode, string> = {
+  all: "All",
+  commands: "Commands",
+  workflows: "Workflows",
+  skills: "Agent Skills",
+  recipes: "Recipes",
+  "agent-workflows": "AI Agent Workflows",
 };
-
-type ViewMode = "commands" | "workflows";
 
 const Index = () => {
   const [search, setSearch] = useState("");
-  const [activeCategories, setActiveCategories] = useState<Set<Category>>(new Set());
-  
-  const [view, setView] = useState<ViewMode>("commands");
+  const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<ViewMode>("all");
 
-  const toggleCategory = (cat: Category) => {
+  const query = search.trim().toLowerCase();
+
+  const filteredCommands = useMemo(() => {
+    return commands.filter((cmd) => {
+      const matchesCategory = activeCategories.size === 0 || activeCategories.has(cmd.category);
+      const matchesSearch =
+        !query ||
+        cmd.title.toLowerCase().includes(query) ||
+        cmd.command.toLowerCase().includes(query) ||
+        cmd.description?.toLowerCase().includes(query) ||
+        cmd.flags?.some((flag) => flag.toLowerCase().includes(query));
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategories, query]);
+
+  const filteredWorkflows = useMemo(() => {
+    return workflows.filter((workflow) => {
+      const matchesCategory = activeCategories.size === 0 || activeCategories.has(workflow.category);
+      const matchesSearch =
+        !query ||
+        workflow.title.toLowerCase().includes(query) ||
+        workflow.description.toLowerCase().includes(query) ||
+        workflow.problem?.toLowerCase().includes(query) ||
+        workflow.whenToUse?.toLowerCase().includes(query) ||
+        workflow.steps.some(
+          (step) => step.label.toLowerCase().includes(query) || step.command.toLowerCase().includes(query),
+        );
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategories, query]);
+
+  const filteredSkills = useMemo(() => {
+    return agentSkills.filter((skill) => {
+      const matchesCategory = activeCategories.size === 0 || activeCategories.has(skill.category);
+      const matchesSearch =
+        !query ||
+        skill.name.toLowerCase().includes(query) ||
+        skill.description.toLowerCase().includes(query) ||
+        skill.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+        skill.compatibleTools.some((tool) => tool.toLowerCase().includes(query)) ||
+        skill.formats.some((format) => format.content.toLowerCase().includes(query));
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategories, query]);
+
+  const filteredRecipes = useMemo(() => {
+    return recipes.filter((recipe) => {
+      const matchesCategory = activeCategories.size === 0 || activeCategories.has(recipe.category);
+      const matchesSearch =
+        !query ||
+        recipe.title.toLowerCase().includes(query) ||
+        recipe.problem.toLowerCase().includes(query) ||
+        recipe.notes.some((note) => note.toLowerCase().includes(query)) ||
+        recipe.commands.some((entry) =>
+          `${entry.label} ${entry.command} ${entry.platform ?? ""}`.toLowerCase().includes(query),
+        );
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategories, query]);
+
+  const filteredAgentWorkflows = useMemo(() => {
+    return agentWorkflows.filter((workflow) => {
+      const matchesCategory = activeCategories.size === 0 || activeCategories.has(workflow.category);
+      const matchesSearch =
+        !query ||
+        workflow.title.toLowerCase().includes(query) ||
+        workflow.goal.toLowerCase().includes(query) ||
+        workflow.context.some((item) => item.toLowerCase().includes(query)) ||
+        workflow.agentInstructions.some((item) => item.toLowerCase().includes(query)) ||
+        workflow.verification.some((item) => item.toLowerCase().includes(query));
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategories, query]);
+
+  const categories = useMemo(() => {
+    const source =
+      view === "commands"
+        ? commands
+        : view === "workflows"
+          ? workflows
+          : view === "skills"
+            ? agentSkills
+            : view === "recipes"
+              ? recipes
+              : view === "agent-workflows"
+                ? agentWorkflows
+                : [...commands, ...workflows, ...agentSkills, ...recipes, ...agentWorkflows];
+
+    return Array.from(new Set(source.map((item) => item.category))).sort((a, b) =>
+      getCategoryLabel(a).localeCompare(getCategoryLabel(b)),
+    );
+  }, [view]);
+
+  const toggleCategory = (category: string) => {
     setActiveCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat);
-      else next.add(cat);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
       return next;
     });
   };
 
-  const filteredCommands = useMemo(() => {
-    const q = search.toLowerCase();
-    return commands.filter((cmd) => {
-      const matchesCategory = activeCategories.size === 0 || activeCategories.has(cmd.category);
-      const matchesSearch =
-        !q || cmd.title.toLowerCase().includes(q) || cmd.command.toLowerCase().includes(q);
-      return matchesCategory && matchesSearch;
-    });
-  }, [search, activeCategories]);
-
-  const filteredWorkflows = useMemo(() => {
-    const q = search.toLowerCase();
-    return workflows.filter((wf) => {
-      const matchesCategory = activeCategories.size === 0 || activeCategories.has(wf.category);
-      const matchesSearch =
-        !q ||
-        wf.title.toLowerCase().includes(q) ||
-        wf.description.toLowerCase().includes(q) ||
-        wf.steps.some((s) => s.command.toLowerCase().includes(q) || s.label.toLowerCase().includes(q));
-      return matchesCategory && matchesSearch;
-    });
-  }, [search, activeCategories]);
+  const totalItems =
+    commands.length + workflows.length + agentSkills.length + recipes.length + agentWorkflows.length;
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={logoDark} alt="DevCheats logo" className="h-8 w-8 object-contain" />
               <div className="flex items-baseline gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground font-mono">
-                  DevCheats
-                </h1>
+                <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">DevCheats</h1>
                 <span className="text-xs text-muted-foreground">
-                  {commands.length} commands · {workflows.length} workflows
+                  {commands.length} commands · {workflows.length} workflows · {agentSkills.length} skills · {recipes.length} recipes · {agentWorkflows.length} AI workflows
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="relative max-w-lg">
+          <div className="relative max-w-xl">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search commands & workflows..."
+              placeholder="Search commands, workflows, skills, and recipes..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-card border-border font-mono text-sm"
+              onChange={(event) => setSearch(event.target.value)}
+              className="border-border bg-card pl-9 font-mono text-sm"
             />
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {/* View toggle */}
-            <div className="flex rounded-md border border-border overflow-hidden mr-2">
-              <button
-                onClick={() => setView("commands")}
-                className={`px-3 py-1 text-xs font-medium transition-colors ${
-                  view === "commands"
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Commands
-              </button>
-              <button
-                onClick={() => setView("workflows")}
-                className={`flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors ${
-                  view === "workflows"
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Layers className="h-3 w-3" /> Workflows
-              </button>
-            </div>
-
-            {categories.map((cat) => {
-              const isActive = activeCategories.has(cat);
-              return (
+            <div className="mr-2 flex overflow-hidden rounded-md border border-border">
+              {Object.entries(viewLabel).map(([key, label]) => (
                 <button
-                  key={cat}
-                  onClick={() => toggleCategory(cat)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
-                    isActive ? chipStyles[cat].active : chipStyles[cat].inactive
+                  key={key}
+                  onClick={() => setView(key as ViewMode)}
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${
+                    view === key ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {categoryLabels[cat]}
+                  {key === "workflows" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Layers className="h-3 w-3" /> {label}
+                    </span>
+                  ) : (
+                    label
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {categories.map((category) => {
+              const isActive = activeCategories.has(category);
+              const styles = getCategoryStyles(category);
+              return (
+                <button
+                  key={category}
+                  onClick={() => toggleCategory(category)}
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                    isActive ? styles.chipActive : styles.chipInactive
+                  }`}
+                >
+                  {getCategoryLabel(category)}
                 </button>
               );
             })}
+
             {activeCategories.size > 0 && (
               <button
                 onClick={() => setActiveCategories(new Set())}
@@ -153,26 +211,122 @@ const Index = () => {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        {view === "commands" ? (
+        {view === "all" ? (
+          <div className="space-y-8">
+            {filteredCommands.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-foreground">Commands ({filteredCommands.length})</h2>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredCommands.slice(0, query ? filteredCommands.length : 9).map((command, index) => (
+                    <CommandCard key={`cmd-${index}-${command.title}`} {...command} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {filteredWorkflows.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-foreground">Workflows ({filteredWorkflows.length})</h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {filteredWorkflows.slice(0, query ? filteredWorkflows.length : 8).map((workflow, index) => (
+                    <WorkflowCard key={`wf-${index}-${workflow.title}`} {...workflow} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {filteredSkills.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-foreground">Agent Skills ({filteredSkills.length})</h2>
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {filteredSkills.slice(0, query ? filteredSkills.length : 6).map((skill) => (
+                    <SkillCard key={skill.id} {...skill} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {filteredRecipes.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-foreground">Recipes ({filteredRecipes.length})</h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {filteredRecipes.slice(0, query ? filteredRecipes.length : 4).map((recipe) => (
+                    <RecipeCard key={recipe.id} {...recipe} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {filteredAgentWorkflows.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-foreground">
+                  AI Coding Agent Workflows ({filteredAgentWorkflows.length})
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {filteredAgentWorkflows
+                    .slice(0, query ? filteredAgentWorkflows.length : 4)
+                    .map((workflow) => (
+                      <AgentWorkflowCard key={workflow.id} {...workflow} />
+                    ))}
+                </div>
+              </section>
+            )}
+
+            {totalItems > 0 &&
+              filteredCommands.length === 0 &&
+              filteredWorkflows.length === 0 &&
+              filteredSkills.length === 0 &&
+              filteredRecipes.length === 0 &&
+              filteredAgentWorkflows.length === 0 && (
+                <p className="py-12 text-center font-mono text-sm text-muted-foreground">No results found.</p>
+              )}
+          </div>
+        ) : view === "commands" ? (
           filteredCommands.length === 0 ? (
-            <p className="py-12 text-center text-muted-foreground font-mono text-sm">
-              No commands found.
-            </p>
+            <p className="py-12 text-center font-mono text-sm text-muted-foreground">No commands found.</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredCommands.map((cmd, i) => (
-                <CommandCard key={`${cmd.category}-${i}`} {...cmd} />
+              {filteredCommands.map((command, index) => (
+                <CommandCard key={`command-${index}-${command.title}`} {...command} />
               ))}
             </div>
           )
-        ) : filteredWorkflows.length === 0 ? (
-          <p className="py-12 text-center text-muted-foreground font-mono text-sm">
-            No workflows found.
-          </p>
+        ) : view === "workflows" ? (
+          filteredWorkflows.length === 0 ? (
+            <p className="py-12 text-center font-mono text-sm text-muted-foreground">No workflows found.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {filteredWorkflows.map((workflow, index) => (
+                <WorkflowCard key={`workflow-${index}-${workflow.title}`} {...workflow} />
+              ))}
+            </div>
+          )
+        ) : view === "skills" ? (
+          filteredSkills.length === 0 ? (
+            <p className="py-12 text-center font-mono text-sm text-muted-foreground">No skills found.</p>
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {filteredSkills.map((skill) => (
+                <SkillCard key={skill.id} {...skill} />
+              ))}
+            </div>
+          )
+        ) : view === "recipes" ? (
+          filteredRecipes.length === 0 ? (
+            <p className="py-12 text-center font-mono text-sm text-muted-foreground">No recipes found.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {filteredRecipes.map((recipe) => (
+                <RecipeCard key={recipe.id} {...recipe} />
+              ))}
+            </div>
+          )
+        ) : filteredAgentWorkflows.length === 0 ? (
+          <p className="py-12 text-center font-mono text-sm text-muted-foreground">No AI workflows found.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {filteredWorkflows.map((wf, i) => (
-              <WorkflowCard key={`${wf.category}-${i}`} {...wf} />
+            {filteredAgentWorkflows.map((workflow) => (
+              <AgentWorkflowCard key={workflow.id} {...workflow} />
             ))}
           </div>
         )}

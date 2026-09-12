@@ -1,17 +1,50 @@
-export type Category = "git" | "shell" | "npm" | "docker" | "ai";
+export type Category =
+  | "git"
+  | "shell"
+  | "npm"
+  | "docker"
+  | "ai"
+  | "linux"
+  | "macos"
+  | "node"
+  | "python"
+  | "kubernetes"
+  | "database"
+  | "devops"
+  | "security"
+  | "performance"
+  | "frontend"
+  | "backend";
 
 export interface Command {
   title: string;
   command: string;
   category: Category;
+  description?: string;
+  example?: string;
+  flags?: string[];
+  safety?: "safe" | "destructive";
+  platform?: string[];
+  relatedCommands?: string[];
 }
 
-export const categoryLabels: Record<Category, string> = {
+export const categoryLabels: Partial<Record<Category, string>> = {
   git: "Git",
   shell: "Terminal",
   npm: "npm/yarn",
   docker: "Docker",
   ai: "AI",
+  linux: "Linux",
+  macos: "macOS",
+  node: "Node.js",
+  python: "Python",
+  kubernetes: "Kubernetes",
+  database: "Databases",
+  devops: "DevOps",
+  security: "Security",
+  performance: "Performance",
+  frontend: "Frontend",
+  backend: "Backend",
 };
 
 export const commands: Command[] = [

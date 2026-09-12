@@ -1,21 +1,22 @@
 import { useState } from "react";
 import { Check, ChevronDown, ChevronRight, Copy } from "lucide-react";
 import type { Workflow } from "@/data/workflows";
-import type { Category } from "@/data/commands";
-import { categoryLabels } from "@/data/commands";
 import { Badge } from "@/components/ui/badge";
+import { getCategoryLabel, getCategoryStyles } from "@/lib/category";
 
-const categoryStyles: Record<Category, string> = {
-  git: "bg-cmd-git/15 text-cmd-git border-cmd-git/30",
-  shell: "bg-cmd-shell/15 text-cmd-shell border-cmd-shell/30",
-  npm: "bg-cmd-npm/15 text-cmd-npm border-cmd-npm/30",
-  docker: "bg-cmd-docker/15 text-cmd-docker border-cmd-docker/30",
-  ai: "bg-cmd-ai/15 text-cmd-ai border-cmd-ai/30",
-};
-
-export function WorkflowCard({ title, description, category, steps }: Workflow) {
+export function WorkflowCard({
+  title,
+  description,
+  category,
+  steps,
+  problem,
+  whenToUse,
+  prerequisites,
+  commonMistakes,
+}: Workflow) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const categoryStyles = getCategoryStyles(category);
 
   const handleCopyAll = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,8 +40,8 @@ export function WorkflowCard({ title, description, category, steps }: Workflow) 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-medium text-foreground">{title}</h3>
-            <Badge variant="outline" className={`shrink-0 text-[10px] ${categoryStyles[category]}`}>
-              {categoryLabels[category]}
+            <Badge variant="outline" className={`shrink-0 text-[10px] ${categoryStyles.badge}`}>
+              {getCategoryLabel(category)}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{description}</p>
@@ -52,6 +53,13 @@ export function WorkflowCard({ title, description, category, steps }: Workflow) 
 
       {open && (
         <div className="border-t border-border px-4 pb-4 pt-3">
+          {problem && <p className="mb-2 text-xs text-muted-foreground"><span className="font-medium text-foreground">Problem:</span> {problem}</p>}
+          {whenToUse && <p className="mb-2 text-xs text-muted-foreground"><span className="font-medium text-foreground">When to use:</span> {whenToUse}</p>}
+          {prerequisites?.length ? (
+            <p className="mb-2 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Prerequisites:</span> {prerequisites.join(", ")}
+            </p>
+          ) : null}
           <ol className="space-y-2">
             {steps.map((step, i) => (
               <li key={i} className="flex items-start gap-3">
@@ -60,6 +68,11 @@ export function WorkflowCard({ title, description, category, steps }: Workflow) 
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground mb-1">{step.label}</p>
+                  {step.expectedOutput && (
+                    <p className="mb-1 text-[11px] text-muted-foreground/90">
+                      Expected: {step.expectedOutput}
+                    </p>
+                  )}
                   <pre className="overflow-x-auto rounded-md bg-background px-3 py-1.5 font-mono text-xs text-cmd-code">
                     <code>{step.command}</code>
                   </pre>
@@ -67,6 +80,16 @@ export function WorkflowCard({ title, description, category, steps }: Workflow) 
               </li>
             ))}
           </ol>
+          {commonMistakes?.length ? (
+            <div className="mt-3 rounded-md border border-border/80 bg-background/60 p-2">
+              <p className="mb-1 text-[11px] font-medium text-foreground">Common mistakes</p>
+              <ul className="list-disc space-y-1 pl-4 text-[11px] text-muted-foreground">
+                {commonMistakes.map((mistake) => (
+                  <li key={mistake}>{mistake}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <button
             onClick={handleCopyAll}
             className="mt-3 flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
