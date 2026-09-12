@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Layers, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { commands } from "@/data/commands";
@@ -25,10 +26,30 @@ const viewLabel: Record<ViewMode, string> = {
   "agent-workflows": "AI Agent Workflows",
 };
 
+const pathForView: Record<ViewMode, string> = {
+  all: "/",
+  commands: "/commands",
+  workflows: "/workflows",
+  skills: "/skills",
+  recipes: "/recipes",
+  "agent-workflows": "/agent-workflows",
+};
+
+const viewForPath: Record<string, ViewMode> = {
+  "/": "all",
+  "/commands": "commands",
+  "/workflows": "workflows",
+  "/skills": "skills",
+  "/recipes": "recipes",
+  "/agent-workflows": "agent-workflows",
+};
+
 const Index = () => {
   const [search, setSearch] = useState("");
   const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
-  const [view, setView] = useState<ViewMode>("all");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const view = viewForPath[location.pathname] ?? "all";
 
   const query = search.trim().toLowerCase();
 
@@ -142,12 +163,7 @@ const Index = () => {
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={logoDark} alt="DevCheats logo" className="h-8 w-8 object-contain" />
-              <div className="flex items-baseline gap-2">
-                <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">DevCheats</h1>
-                <span className="text-xs text-muted-foreground">
-                  {commands.length} commands · {workflows.length} workflows · {agentSkills.length} skills · {recipes.length} recipes · {agentWorkflows.length} AI workflows
-                </span>
-              </div>
+              <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">DevCheats</h1>
             </div>
           </div>
 
@@ -166,7 +182,7 @@ const Index = () => {
               {Object.entries(viewLabel).map(([key, label]) => (
                 <button
                   key={key}
-                  onClick={() => setView(key as ViewMode)}
+                  onClick={() => navigate(pathForView[key as ViewMode])}
                   className={`px-3 py-1 text-xs font-medium transition-colors ${
                     view === key ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -331,6 +347,13 @@ const Index = () => {
           </div>
         )}
       </main>
+
+      <footer className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-4 py-6 text-center font-mono text-xs text-muted-foreground sm:px-6">
+          {commands.length} commands · {workflows.length} workflows · {agentSkills.length} skills ·{" "}
+          {recipes.length} recipes · {agentWorkflows.length} AI workflows
+        </div>
+      </footer>
     </div>
   );
 };
