@@ -14,7 +14,8 @@ export type Category =
   | "security"
   | "performance"
   | "frontend"
-  | "backend";
+  | "backend"
+  | "cloud";
 
 export interface Command {
   title: string;
@@ -45,6 +46,7 @@ export const categoryLabels: Partial<Record<Category, string>> = {
   performance: "Performance",
   frontend: "Frontend",
   backend: "Backend",
+  cloud: "Cloud & Deploy",
 };
 
 export const commands: Command[] = [
