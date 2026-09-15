@@ -1,11 +1,9 @@
-import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Download } from "lucide-react";
+import { Download, FileCode2 } from "lucide-react";
 import { getSkillById } from "@/lib/detail-items";
 import { useSeo } from "@/hooks/use-seo";
 import { DetailLayout } from "@/components/DetailLayout";
 import { CopyButton } from "@/components/CopyButton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NotFound from "./NotFound";
 
 const SkillDetail = () => {
@@ -14,20 +12,14 @@ const SkillDetail = () => {
 
   useSeo(`/skills/${id}`);
 
-  const [activeFormat, setActiveFormat] = useState(skill?.formats[0]?.id ?? "markdown");
-  const selectedFormat = useMemo(
-    () => skill?.formats.find((format) => format.id === activeFormat) ?? skill?.formats[0],
-    [activeFormat, skill],
-  );
-
-  if (!skill || !selectedFormat) return <NotFound />;
+  if (!skill) return <NotFound />;
 
   const handleDownload = () => {
-    const blob = new Blob([selectedFormat.content], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([skill.content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${skill.id}.${selectedFormat.id === "markdown" ? "md" : "txt"}`;
+    link.download = "SKILL.md";
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -51,37 +43,29 @@ const SkillDetail = () => {
         ))}
       </div>
 
-      <p className="mb-4 text-xs text-muted-foreground">Compatible: {skill.compatibleTools.join(", ")}</p>
+      <div className="mb-4 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+        <p className="flex items-center gap-1.5">
+          <FileCode2 className="h-3.5 w-3.5 shrink-0" />
+          Save this file as <span className="font-mono text-foreground">{skill.filename}</span> in your
+          repository.
+        </p>
+        <p className="mt-1.5">
+          Compatible with: {skill.compatibleTools.join(", ")} — any agent that reads SKILL.md-style
+          instruction files.
+        </p>
+      </div>
 
-      <Tabs value={activeFormat} onValueChange={(value) => setActiveFormat(value as typeof activeFormat)}>
-        <TabsList className="mb-2 h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-          {skill.formats.map((format) => (
-            <TabsTrigger
-              key={format.id}
-              value={format.id}
-              className="h-7 border border-border px-2 text-xs data-[state=active]:bg-muted"
-            >
-              {format.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {skill.formats.map((format) => (
-          <TabsContent key={format.id} value={format.id} className="mt-0">
-            <pre className="max-h-96 overflow-auto rounded-md border border-border bg-card p-3 text-xs text-cmd-code">
-              <code>{format.content}</code>
-            </pre>
-          </TabsContent>
-        ))}
-      </Tabs>
+      <pre className="max-h-[32rem] overflow-auto rounded-md border border-border bg-card p-3 text-xs text-cmd-code">
+        <code>{skill.content}</code>
+      </pre>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <CopyButton text={selectedFormat.content} />
+        <CopyButton text={skill.content} />
         <button
           onClick={handleDownload}
           className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <Download className="h-3 w-3" /> Download raw
+          <Download className="h-3 w-3" /> Download SKILL.md
         </button>
       </div>
 
